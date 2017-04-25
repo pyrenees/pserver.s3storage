@@ -268,8 +268,7 @@ class S3FileManager(object):
 
         downloader = await file.download(None)
         await resp.prepare(self.request)
-        resp.start(self.request)
-
+        
         async with downloader['Body'] as stream:
             data = await stream.read(CHUNK_SIZE)
 
