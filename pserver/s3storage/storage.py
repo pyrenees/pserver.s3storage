@@ -10,6 +10,7 @@ import json
 import logging
 import transaction
 import uuid
+import multidict
 
 from aiohttp.web import StreamResponse
 from datetime import datetime
@@ -179,7 +180,7 @@ class S3FileManager(object):
         else:
             file._one_tus_shoot = False
         # Location will need to be adapted on aiohttp 1.1.x
-        resp = Response(headers=aiohttp.MultiDict({
+        resp = Response(headers=multidict.MultiDict({
             'Location': IAbsoluteURL(self.context, self.request)() + '/@tusupload/' + self.field.__name__,  # noqa
             'Tus-Resumable': '1.0.0',
             'Access-Control-Expose-Headers': 'Location,Tus-Resumable'
@@ -222,7 +223,7 @@ class S3FileManager(object):
             expiration = file._resumable_uri_date + timedelta(days=7)
         if file._size <= file._current_upload:
             await file.finishUpload(self.context)
-        resp = Response(headers=aiohttp.MultiDict({
+        resp = Response(headers=multidict.MultiDict({
             'Upload-Offset': str(file.actualSize()),
             'Tus-Resumable': '1.0.0',
             'Upload-Expires': expiration.isoformat(),
@@ -241,11 +242,11 @@ class S3FileManager(object):
         }
         if file.size:
             head_response['Upload-Length'] = str(file._size)
-        resp = Response(headers=aiohttp.MultiDict(head_response))
+        resp = Response(headers=multidict.MultiDict(head_response))
         return resp
 
     async def tus_options(self):
-        resp = Response(headers=aiohttp.MultiDict({
+        resp = Response(headers=multidict.MultiDict({
             'Tus-Resumable': '1.0.0',
             'Tus-Version': '1.0.0',
             'Tus-Max-Size': '1073741824',
@@ -258,7 +259,7 @@ class S3FileManager(object):
         file = self.field.get(self.context)
         if file is None:
             raise AttributeError('No field value')
-        resp = StreamResponse(headers=aiohttp.MultiDict({
+        resp = StreamResponse(headers=multidict.MultiDict({
             'CONTENT-DISPOSITION': 'attachment; filename="%s"' % file.filename
         }))
         resp.content_type = file.contentType
